@@ -8,7 +8,7 @@ from email.message import EmailMessage
 import smtplib
 from conf import query, num_page, receiver
 
-query_link = f"https://www.researchgate.net/search/publication?q={query}&page="
+query_link = f"https://www.semanticscholar.org/search?q={query}&sort=relevance&page="
 
 # working paths
 working_dir = os.path.dirname(os.path.realpath(__file__))
@@ -34,12 +34,12 @@ for search_link in links_list:
     # get all links to articles from the page
     driver.get(search_link)
     time.sleep(5)
-    articles = driver.find_elements_by_class_name("nova-legacy-o-stack__item")
+    articles = driver.find_elements_by_class_name("result-page")
 
     articles_links = []
     for article in articles:
         try:
-            link = article.find_element_by_css_selector("a.nova-legacy-e-link.nova-legacy-e-link--color-inherit.nova-legacy-e-link--theme-bare").get_attribute("href")
+            link = article.find_element_by_xpath("//a[@data-selenium-selector='title-link']").get_attribute("href")
             articles_links.append(link)
         except:
             pass
@@ -49,23 +49,24 @@ for search_link in links_list:
         tmp_info = {}
 
         driver.get(link)
-        text = driver.find_element_by_class_name("research-detail-header-section__ie11").text
+        text = driver.find_element_by_class_name("fresh-paper-detail-page__header").text
 
         tmp_info.update({
-                        'title': text.split("\n")[0],
-                        'date' : text.split("\n")[1],   # TODO: might convert to datetime
-                        'authors': text.split("Authors:")[-1].replace("\n","; ")
+                        'title': text.split("\n")[1],
+                        'date' : text.split("\n")[3].split("Published ")[1],   # TODO: might convert to datetime
+                        'authors': text.split("\n")[2].replace(',', ';')
                         })
 
         # trying to download the article's doc
         try:
             initial_dir = os.listdir(folder_for_pdf)
-            driver.find_element_by_css_selector("span.nova-legacy-c-button__label.gtm-download-fulltext-btn-header").click()
+            full_path = driver.find_element_by_xpath("//a[@data-selenium-selector='paper-link']")
+            full_path = full_path.get_attribute("href")
             time.sleep(5)
 
-            current_dir = os.listdir(folder_for_pdf)
-            filename = list(set(current_dir) - set(initial_dir))[0]
-            full_path = os.path.join(folder_for_pdf, filename)
+            # current_dir = os.listdir(folder_for_pdf)
+            # filename = list(set(current_dir) - set(initial_dir))[0]
+            # full_path = os.path.join(folder_for_pdf, filename)
 
         except Exception as e:
             full_path = None
