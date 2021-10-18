@@ -71,7 +71,8 @@ for search_link in links_list:
         except Exception as e:
             full_path = None
 
-        tmp_info.update({'path_to_file':full_path})
+        tmp_info.update({'path_to_file':full_path,
+                         'link_to_page': search_link})
 
         final_info.append(tmp_info.copy())
         time.sleep(2)
